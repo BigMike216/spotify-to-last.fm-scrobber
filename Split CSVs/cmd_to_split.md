@@ -16,7 +16,7 @@
    📁 Split CSVs
      ├── output.csv
      └── split_csv.py
-   ``` </pre>
+``` </pre>
 
    * now right click on the folder and go to terminal and write this command
      "python split_csv.py" and press enter.
@@ -28,4 +28,4 @@
     part1.csv
     paer2.csv
     ....
-   ``` </pre>
+``` </pre>
