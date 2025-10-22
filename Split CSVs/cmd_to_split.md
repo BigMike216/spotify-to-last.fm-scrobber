@@ -1,31 +1,36 @@
 1. If your history has more than 2500 songs this is for ya.
 
-2. So last.fm has a limit of around 2800 scrobble/day so if u try to scrobble more than 2800
-   songs then there is a chance you might get banned.
+2. So Last.fm has a limit of around 2800 scrobbles per day. Going above this might cause rate-limit 
+   errors or temporary submission blocks.
 
-3. So using this script you can convert the big chunk of files into parts, each file will
-   contains 2500 songs. Also last.fm API lets us send multiple scrobbles in one request (up to 50 tracks per call)
+3. This script splits your large files into smaller parts — each file containing about 2500 songs.  
+   The Last.fm API supports sending multiple scrobbles in a single request 
+   (up to 50 tracks per call).
 
 4. To convert
 
-   * *make a folder*.
-   * add the output.csv file and split_csv.py in that folder.
-   * your folder should now look smt like this
+   - *Create a folder*.
+   - Add the **output.csv** files (the one you got after converting the json files) and 
+     **split_csv.py** in that folder.
+   - Your folder should now look smt like this
 
-<pre> ```  
-   📁 Split CSVs
+<pre>
+    📁 Split CSVs
      ├── output.csv
      └── split_csv.py
-   ``` </pre>
+</pre>
 
-   * now right click on the folder and go to terminal and write this command
-     "python split_csv.py" and press enter.
+   - now right click on the folder and go to terminal and write this command and press enter.
+   ```
+     python split_csv.py
+   ```
 
-5. Now ur output files is has been split into multiple files
-   like
-<pre> ```  
+5. Now ur output files will be split into multiple files like
+   ```  
     part0.cvs
     part1.csv
     paer2.csv
     ....
-   ``` </pre>
+   ```
+
+6. If any issue check the file name in the convert.py , or check the README.md to contact. 
