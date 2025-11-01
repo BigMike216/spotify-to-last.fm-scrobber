@@ -86,8 +86,10 @@ CSVtoLast.fm
   python lastfm_scrobbler.py
   ```
 
-- I hope it does work for ya all cuz it did for me. <br><br>
+- I hope it does work for ya all cuz it did for me. 
+<br><br>
 
+DONT FORGET TO KEEP A 24H GAP AFTER UPLOADING EACH PART FILE TO LAST.FM <br><br>
 
 # Conclusion
 
