@@ -1,144 +1,104 @@
-import json
-import csv
-import pandas as pd
+#!/usr/bin/env python3
+import json, sys, os, glob
+from json.decoder import JSONDecodeError
 
-# Method 1: Using pandas with quotes
+def iter_json_values(text):
+    """Iteratively decode multiple top-level JSON values from a single string."""
+    dec = json.JSONDecoder()
+    i, n = 0, len(text)
+    while i < n:
+        while i < n and text[i].isspace():
+            i += 1
+        if i >= n:
+            break
+        try:
+            obj, end = dec.raw_decode(text, i)
+        except JSONDecodeError:
+            next_candidates = [x for x in (text.find('{', i+1), text.find('[', i+1)) if x != -1]
+            if not next_candidates:
+                break
+            i = min(next_candidates)
+            continue
+        i = end
+        yield obj
 
+def iter_history_items(path):
+    with open(path, 'r', encoding='utf-8') as f:
+        data = f.read()
+    for val in iter_json_values(data):
+        if isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict):
+                    yield item
+        elif isinstance(val, dict):
+            yield val
 
-def json_to_csv_pandas(input_file, output_file):
-    """
-    Convert JSON to CSV using pandas with quotes around all fields
-    """
-    # Read JSON file
-    with open(input_file, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+def extract_pair(item):
+    # Supports different Spotify export formats
+    artist = (
+        item.get('master_metadata_album_artist_name')
+        or item.get('artistName')
+        or item.get('artist')
+    )
+    track = (
+        item.get('master_metadata_track_name')
+        or item.get('trackName')
+        or item.get('track')
+        or item.get('song')
+    )
+    if artist and track:
+        return str(artist), str(track)
+    return None
 
-    # Create DataFrame with only the columns we need
-    df = pd.DataFrame(data)
+def collect_files(inputs):
+    files = []
+    for p in inputs:
+        matches = glob.glob(p, recursive=True)
+        if not matches:
+            matches = [p]
+        for m in matches:
+            if os.path.isdir(m):
+                for root, _, filenames in os.walk(m):
+                    for name in filenames:
+                        if name.lower().endswith('.json'):
+                            files.append(os.path.join(root, name))
+            elif os.path.isfile(m):
+                files.append(m)
+    seen, unique = set(), []
+    for f in files:
+        if f not in seen:
+            seen.add(f)
+            unique.append(f)
+    return unique
 
-    # Select and rename columns
-    df_filtered = df[['master_metadata_album_artist_name',
-                      'master_metadata_track_name']].copy()
-    df_filtered.columns = ['Artist', 'Track']
+def csv_quote(value: str) -> str:
+    # Double any internal quotes to meet CSV escaping rules
+    return '"' + value.replace('"', '""') + '"'
 
-    # Remove rows where either Artist or Track is None/null
-    df_filtered = df_filtered.dropna()
+def main(argv):
+    out_csv = 'output.csv'
+    inputs = argv if argv else ['spotify_data.json']
 
-    # Save to CSV with quotes around all fields
-    df_filtered.to_csv(output_file, index=False, encoding='utf-8',
-                       quoting=csv.QUOTE_ALL)
-    print(
-        f"Successfully converted {len(df_filtered)} records to {output_file}")
+    files = collect_files(inputs)
+    if not files:
+        sys.stderr.write('No input JSON files found.\n')
+        sys.exit(1)
 
-# Method 2: Using standard library with quotes
+    rows = 0
+    # newline='' avoids blank lines on Windows
+    with open(out_csv, 'w', encoding='utf-8', newline='') as out:
+        for path in files:
+            for item in iter_history_items(path):
+                pair = extract_pair(item)
+                if not pair:
+                    continue
+                artist, track = pair
+                # Produce: "Artist", "Track" (note the space after the comma)
+                line = f'{csv_quote(artist)}, {csv_quote(track)}\n'
+                out.write(line)
+                rows += 1
 
+    print(f'Wrote {rows} lines to {out_csv}')
 
-def json_to_csv_standard(input_file, output_file):
-    """
-    Convert JSON to CSV using standard library with quotes
-    """
-    with open(input_file, 'r', encoding='utf-8') as json_file:
-        data = json.load(json_file)
-
-    # Open CSV file for writing
-    with open(output_file, 'w', newline='', encoding='utf-8') as csv_file:
-        # Configure writer to quote all fields
-        writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
-
-        # Write header
-        writer.writerow(['Artist', 'Track'])
-
-        # Write data rows
-        count = 0
-        for record in data:
-            artist = record.get('master_metadata_album_artist_name')
-            track = record.get('master_metadata_track_name')
-
-            # Only write if both fields have values
-            if artist and track:
-                writer.writerow([artist, track])
-                count += 1
-
-        print(f"Successfully converted {count} records to {output_file}")
-
-# Method 3: For extremely large files (streaming approach) with quotes
-
-
-def json_to_csv_streaming(input_file, output_file):
-    """
-    Convert JSON to CSV using streaming for very large files
-    """
-    import ijson  # You'll need to install this: pip install ijson
-
-    with open(input_file, 'rb') as json_file:
-        with open(output_file, 'w', newline='', encoding='utf-8') as csv_file:
-            # Configure writer to quote all fields
-            writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
-
-            # Write header
-            writer.writerow(['Artist', 'Track'])
-
-            # Parse JSON array items one by one
-            parser = ijson.items(json_file, 'item')
-            count = 0
-
-            for record in parser:
-                artist = record.get('master_metadata_album_artist_name')
-                track = record.get('master_metadata_track_name')
-
-                # Only write if both fields have values
-                if artist and track:
-                    writer.writerow([artist, track])
-                    count += 1
-
-                    # Print progress every 10000 records
-                    if count % 10000 == 0:
-                        print(f"Processed {count} records...")
-
-            print(f"Successfully converted {count} records to {output_file}")
-
-# Method 4: Simple version without header (if you don't want header row)
-
-
-def json_to_csv_no_header(input_file, output_file):
-    """
-    Convert JSON to CSV without header row, with quotes
-    """
-    with open(input_file, 'r', encoding='utf-8') as json_file:
-        data = json.load(json_file)
-
-    with open(output_file, 'w', newline='', encoding='utf-8') as csv_file:
-        writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
-
-        count = 0
-        for record in data:
-            artist = record.get('master_metadata_album_artist_name')
-            track = record.get('master_metadata_track_name')
-
-            if artist and track:
-                writer.writerow([artist, track])
-                count += 1
-
-        print(f"Successfully converted {count} records to {output_file}")
-
-
-# Main execution
-if __name__ == "__main__":
-    # Specify your input and output file names
-    input_json_file = "spotify_data.json"  # Replace with your JSON file name
-    output_csv_file = "output.csv"  # Output CSV file name
-
-    # Choose the method based on your needs:
-
-    # With header row "Artist", "Track"
-    try:
-        json_to_csv_pandas(input_json_file, output_csv_file)
-    except ImportError:
-        print("pandas not installed. Using standard library method...")
-        json_to_csv_standard(input_json_file, output_csv_file)
-
-    # Without header row (just the data)
-    # json_to_csv_no_header(input_json_file, output_csv_file)
-
-    # For very large files where memory is a concern:
-    # json_to_csv_streaming(input_json_file, output_csv_file)
+if __name__ == '__main__':
+    main(sys.argv[1:])

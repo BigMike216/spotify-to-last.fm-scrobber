@@ -23,6 +23,10 @@ json to csv 1
      ```
      pip install pandas
      ```
+     OR (if there was any error use the other command)
+     ```
+     py -m pip install pylast pandas python-dotenv
+     ```
 
 5. Go to json to csv 1  folder right click on it and open terminal
    and paste this command and press enter.

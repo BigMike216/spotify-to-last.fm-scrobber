@@ -33,6 +33,10 @@ spotify_data.json
      ```
      pip install pandas
      ```
+     OR (if there was any error use the other command)
+     ```
+     py -m pip install pylast pandas python-dotenv
+     ```  
 
 6. Go to json to csv 2  folder right click on it and open terminal
    and paste this command and press enter.
