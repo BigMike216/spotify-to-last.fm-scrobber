@@ -4,6 +4,7 @@ Its an script that helps to upload Spotify listening history to last.fm. <br><br
 
 ## STEPS TO FOLOW 
 <br><br>
+
 **Step 1: Get Spotify History**
 
 - Go to https://www.spotify.com/in-en/account/overview/ 
@@ -14,7 +15,7 @@ Its an script that helps to upload Spotify listening history to last.fm. <br><br
 **Step 2: Install python & VS Code**
 
 - Go to https://www.python.org/downloads/ and install and run it.
-- After installing in go to terminal ( Windows+ R and type cmd and enter) and 
+- After installing open the terminal ( Windows+ R and type cmd and enter) and 
   in the type 
   ```
   python --version
@@ -32,22 +33,53 @@ pip install pylast pandas python-dotenv
   click enter and it will be installed. <br><br>
 
 
-**Step 4: Convert .jason file to .csv file**
+**Step 4: Convert .json file to .csv file and Split it**
 
-- IF YOU HAVE REQUESTED
-   - 1 yr Spotify History go to "json to csv 1"
-   - whole Spotify History go to "json to csv 2"
-- And go to "cmdtoconvert.md" and read u lazy ass. <br><br>
+1. Click on "Clone" and download the ZIP file, then extract it.
+
+2. After extraction, open the extracted folder — you might see another folder with the same name   
+   inside. Copy the last extracted folder (the one that contains all the files) and move or paste it anywhere you like.
+
+3. Upload the Spotify history files should look smt like this- 
+   **StreamingHistory_music_0** (if its Streaming history for the past year)  
+   or 
+   **Streaming_History_Audio_2024-2025_0** (if its Extended streaming history)
+   so upload this files in json to csv folder (you can upload both if u have) 
 
 
-**Step 5: Split the .csv file**
+4. Your folder should now look smt like this:
+   <pre>
+        📁 json to csv
+        ├── converter.py
+        ├── output.csv
+        ├── StreamingHistory_music_0.json
+        ├── StreamingHistory_music_1.json
+        └── ... (any other StreamingHistor_music files) 
+   </pre>
 
-- Go to "cmd_to_split.md" and read dummy. <br><br>
+   OR
+
+   <pre>  
+        📁 json to csv
+        ├── converter.py
+        ├── Streaming_History_Audio_202x-202x_0
+        ├── Streaming_History_Audio_202x_1
+        └── ... (any other Streaming_History_Audio files) 
+   
+   </pre>
+
+> 💭 Note:
+> So Last.fm has a limit of around 2800-3000 scrobbles per day. Going above this might cause    
+> rate-limit errors or temporary submission blocks.
+> This script automatically splits large CSV files into smaller parts.
+> (each containing about 2600 songs)
+> Also the Last.fm API supports sending multiple scrobbles in a single request 
+> (up to 50 tracks per call).
 
 
-**Step 6: The EXECUTION**
+**Step 5: The EXECUTION**
 
-- Creat a new folder- 
+- Create a new folder- 
 ```
 CSVtoLast.fm
 ```
@@ -89,7 +121,7 @@ CSVtoLast.fm
 - I hope it does work for ya all cuz it did for me. 
 <br><br>
 
-DONT FORGET TO KEEP A 24H GAP AFTER UPLOADING EACH PART FILE TO LAST.FM <br><br>
+**DONT FORGET TO KEEP A 24H GAP AFTER UPLOADING EACH PART FILE TO LAST.FM** <br><br>
 
 # Conclusion
 

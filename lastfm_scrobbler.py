@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
 import pylast
 import time
 import os
 import sys
+import glob
+import re
 from datetime import datetime
 from dotenv import load_dotenv
 import json
@@ -41,6 +44,16 @@ class LastFMScrobbler:
             print(f"❌ Failed to connect to Last.fm: {e}")
             sys.exit(1)
 
+    def list_part_indices(self, directory="MusicCSV"):
+        """Return sorted list of available part indices from MusicCSV/part*.csv"""
+        files = glob.glob(os.path.join(directory, "part*.csv"))
+        indices = []
+        for p in files:
+            m = re.match(r"^part(\d+)\.csv$", os.path.basename(p))
+            if m:
+                indices.append(int(m.group(1)))
+        return sorted(indices)
+
     def read_csv_file(self, filepath):
         """Read CSV file and return list of songs with better error handling"""
         songs = []
@@ -59,23 +72,23 @@ class LastFMScrobbler:
                             artist = row[0].strip().strip('"').strip()
                             track = row[1].strip().strip('"').strip()
 
-                            # Skip empty entries
-                            if artist and track:
-                                songs.append({
-                                    'artist': artist,
-                                    'track': track
-                                })
+                            # Skip header-like entries and empty
+                            if artist and track and not (
+                                artist.lower() == "artist" and track.lower() == "track"
+                            ):
+                                songs.append(
+                                    {'artist': artist, 'track': track})
                         elif len(row) == 1 and ',' in row[0]:
                             # Try to split manually if CSV reader failed
                             parts = row[0].split(',', 1)
                             if len(parts) == 2:
                                 artist = parts[0].strip().strip('"').strip()
                                 track = parts[1].strip().strip('"').strip()
-                                if artist and track:
-                                    songs.append({
-                                        'artist': artist,
-                                        'track': track
-                                    })
+                                if artist and track and not (
+                                    artist.lower() == "artist" and track.lower() == "track"
+                                ):
+                                    songs.append(
+                                        {'artist': artist, 'track': track})
                     except Exception as e:
                         problematic_lines.append({
                             'line': line_num,
@@ -164,12 +177,11 @@ class LastFMScrobbler:
                     else:
                         continue
 
-                    # Skip empty entries
-                    if artist and track:
-                        songs.append({
-                            'artist': artist,
-                            'track': track
-                        })
+                    # Skip header-like entries and empty
+                    if artist and track and not (
+                        artist.lower() == "artist" and track.lower() == "track"
+                    ):
+                        songs.append({'artist': artist, 'track': track})
 
                 except Exception as e:
                     problematic_lines.append({
@@ -364,60 +376,63 @@ class LastFMScrobbler:
             print(f"⚠️ Could not save progress: {e}")
 
     def check_progress(self):
-        """Check which files have been processed"""
+        """Check which files have been processed dynamically"""
         progress_file = "scrobble_progress.json"
+        available = self.list_part_indices()
 
         if os.path.exists(progress_file):
             with open(progress_file, 'r') as f:
                 progress = json.load(f)
-
-            print("\n📊 PROGRESS STATUS:")
-            print(f"{'='*50}")
-            print(f"Completed files: {progress.get('completed', [])}")
-
-            if 'last_run' in progress:
-                print(
-                    f"Last run: {progress['last_run'].get('file', 'N/A')} on {progress['last_run'].get('date', 'N/A')}")
-
-            remaining = [i for i in range(
-                11) if i not in progress.get('completed', [])]
-            if remaining:
-                print(
-                    f"Remaining files: {', '.join([f'part{i}.csv' for i in remaining])}")
-            else:
-                print("All files completed!")
-            print(f"{'='*50}\n")
-
-            return progress.get('completed', [])
         else:
-            print("📊 No previous progress found. Starting fresh!\n")
-            return []
+            progress = {'completed': [], 'last_run': {}}
+
+        completed = sorted(set(progress.get('completed', [])))
+        remaining = [i for i in available if i not in completed]
+
+        print("\n📊 PROGRESS STATUS:")
+        print(f"{'='*50}")
+        print(f"Available files: {[f'part{i}.csv' for i in available]}")
+        print(f"Completed files: {completed}")
+        if remaining:
+            print(
+                f"Remaining files: {', '.join([f'part{i}.csv' for i in remaining])}")
+        else:
+            print("All files completed!")
+        if 'last_run' in progress:
+            print(
+                f"Last run: {progress['last_run'].get('file', 'N/A')} on {progress['last_run'].get('date', 'N/A')}")
+        print(f"{'='*50}\n")
+
+        return completed
 
 
 def main():
     """Main function"""
     print("""
     ╔═══════════════════════════════════════════════════╗
-    ║    Last.fm Batch Scrobbler v1.0 by BIG MIKE :3    ║
+    ║   Last.fm Batch Scrobbler v2.0 by BIG MIKE >~<    ║
     ╚═══════════════════════════════════════════════════╝
     """)
 
     # Create scrobbler instance
     scrobbler = LastFMScrobbler()
 
+    # Find available part files dynamically
+    available = scrobbler.list_part_indices()
+    if not available:
+        print("❌ No part*.csv files found in MusicCSV/")
+        return
+
     # Check progress
     completed = scrobbler.check_progress()
+    remaining = [i for i in available if i not in completed]
 
     # Get next file to process
-    if len(completed) >= 11:
+    if not remaining:
         print("✅ All files have been processed!")
         return
 
-    next_file = 0
-    for i in range(11):
-        if i not in completed:
-            next_file = i
-            break
+    next_file = remaining[0]
 
     print(f"📌 Next file to process: part{next_file}.csv")
     print("\nOptions:")
@@ -426,19 +441,29 @@ def main():
     print("3. Check a CSV file for issues")
     print("4. Exit")
 
+    nums_list = ", ".join(str(i) for i in available)
     choice = input("\nEnter your choice (1-4): ")
 
     if choice == '1':
         scrobbler.process_file(next_file)
     elif choice == '2':
-        file_num = int(input("Enter file number (0-10): "))
-        if 0 <= file_num <= 10:
+        try:
+            file_num = int(input(f"Enter file number ({nums_list}): "))
+        except ValueError:
+            print("❌ Invalid number!")
+            return
+        if file_num in available:
             scrobbler.process_file(file_num)
         else:
             print("❌ Invalid file number!")
     elif choice == '3':
-        file_num = int(input("Enter file number to check (0-10): "))
-        if 0 <= file_num <= 10:
+        try:
+            file_num = int(
+                input(f"Enter file number to check ({nums_list}): "))
+        except ValueError:
+            print("❌ Invalid number!")
+            return
+        if file_num in available:
             filepath = f"MusicCSV/part{file_num}.csv"
             songs = scrobbler.read_csv_file(filepath)
             if songs:
