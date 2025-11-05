@@ -74,8 +74,8 @@ pip install pylast pandas python-dotenv
 > (each containing about 2600 songs)
 > Also the Last.fm API supports sending multiple scrobbles in a single request 
 > (up to 50 tracks per call).
-<br><br>
 
+<br><br>
 **Step 5: The EXECUTION**
 
 - Create a new folder- 
