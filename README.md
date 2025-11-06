@@ -65,7 +65,6 @@ pip install pylast pandas python-dotenv
         ├── Streaming_History_Audio_202x-202x_0
         ├── Streaming_History_Audio_202x_1
         └── ... (any other Streaming_History_Audio files) 
-   
    </pre>
 
 > 💭 Note:
@@ -76,7 +75,7 @@ pip install pylast pandas python-dotenv
 > Also the Last.fm API supports sending multiple scrobbles in a single request 
 > (up to 50 tracks per call).
 
-
+<br><br>
 **Step 5: The EXECUTION**
 
 - Create a new folder- 
