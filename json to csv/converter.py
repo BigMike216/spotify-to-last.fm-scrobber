@@ -8,7 +8,7 @@ import csv
 from json.decoder import JSONDecodeError
 
 # Config
-MIN_MS_PLAYED = 0           # Only include plays >= 0s
+MIN_MS_PLAYED = 30          # Only include plays >= 30s
 OUTPUT_CSV = 'output.csv'   # Master CSV file
 SPLIT_OUTPUT = True         # Split into parts after writing master CSV
 LINES_PER_FILE = 2600       # Rows per part file
