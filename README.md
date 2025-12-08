@@ -30,8 +30,12 @@ Its an script that helps to upload Spotify listening history to last.fm. <br><br
 ```
 pip install pylast pandas python-dotenv
 ```
-  click enter and it will be installed. <br><br>
-
+  click enter and it will be installed.
+  (if it doesn't work try this)
+```
+py -m pip install pylast pandas python-dotenv
+```
+<br><br>
 
 **Step 4: Convert .json file to .csv file and Split it**
 
@@ -51,7 +55,6 @@ pip install pylast pandas python-dotenv
    <pre>
         📁 json to csv
         ├── converter.py
-        ├── output.csv
         ├── StreamingHistory_music_0.json
         ├── StreamingHistory_music_1.json
         └── ... (any other StreamingHistor_music files) 
@@ -106,7 +109,7 @@ CSVtoLast.fm
     │   ├── part1.csv
     │   ├── part2.csv
     │   ├── ...
-    │   └── part10.csv
+    │   └── part99.csv
     ├── .env
     └── lastfm_scrobbler.py 
 </pre>
